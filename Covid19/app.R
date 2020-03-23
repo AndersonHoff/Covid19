@@ -8,13 +8,11 @@
 #
 
 library(shiny)
-if(!require(dplyr)) {istall.packages("dplyr")} else {library(dplyr)}
-if(!require(ggplot2)) {install.packages("ggplot2")} else {library(ggplot2)}
-library(RJSONIO)
-library(ggplot2)
 library(dplyr)
+library(ggplot2)
+library(RJSONIO)
 library(magrittr)
-#library(kableExtra)
+library(kableExtra)
 
 url <- "https://pomber.github.io/covid19/timeseries.json"
 destfile <- "timeseries.json"
@@ -46,9 +44,12 @@ dataset <- dataset[order(dataset$Country, -dataset$Confirmed, -dataset$Days),]
 ui <- fluidPage(
    
    # Application title
-   titlePanel("COVID-19 Countries"),
+   titlePanel("COVID-19 PROBLEM"),
+   p("Diagrams illustrating the increase number of cases of COVID-19 in different countries"),
+   tabsetPanel(
+     tabPanel("Diagrams")
+   ),
    
-   # Sidebar with a slider input for number of bins 
    sidebarLayout(
       sidebarPanel(
          selectInput("countryInput", "Country",
@@ -59,6 +60,10 @@ ui <- fluidPage(
       mainPanel(
         plotOutput("graph"),
         br(), br(),
+        plotOutput("deaths"),
+        br(),
+        plotOutput("recover"),
+        br(),
         tableOutput("results")
       )
    )
@@ -70,20 +75,39 @@ server <- function(input, output) {
   filtered <- reactive({dataset[dataset$Country==input$countryInput, ]})
   
     output$results <- renderTable({
-#      filtered[order(-filtered$Confirmed, -filtered$Days),]
-#      filtered <- filter(dataset, Country == input$countryInput)
-#      knitr::kable(filtered()[1:10,2:5])
+#      kable(filtered)
       filtered()
     })
     
     output$graph <- renderPlot({
       ggplot(filtered(), aes(x=Days, y=Confirmed))+
-        geom_bar(stat = "identity")+
-        theme_bw()+
+        geom_bar(stat = "identity", fill = "darkblue")+
+        theme_bw(base_size = 25) +
+        ggtitle("CONFIRMED CASES OF COVID-19")+
         ylab("Confirmed Cases")+
         xlab("Days")
     
    })
+    
+    output$deaths <- renderPlot({
+      ggplot(filtered(), aes(x=Days, y=Deaths))+
+        geom_bar(stat = "identity", fill = "darkblue")+
+        theme_bw(base_size = 25) +
+        ggtitle("DEATHS FROM COVID-19")+
+        ylab("Deaths Cases")+
+        xlab("Days")
+      
+    })
+    
+    output$recover <- renderPlot({
+      ggplot(filtered(), aes(x=Days, y=Recovered))+
+        geom_bar(stat = "identity", fill = "darkblue")+
+        theme_bw(base_size = 25) +
+        ggtitle("RECOVERED FROM COVID-19")+
+        ylab("Recovered Cases")+
+        xlab("Days")
+      
+    })
 }
 
 # Run the application 
