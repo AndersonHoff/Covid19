@@ -10,23 +10,25 @@
 library(shiny)
 library(dplyr)
 library(ggplot2)
-library(RJSONIO)
+#library(RJSONIO)
 library(magrittr)
-library(kableExtra)
+library(reshape2)
+library(jsonlite)
 
+###############################
 url <- "https://pomber.github.io/covid19/timeseries.json"
 destfile <- "timeseries.json"
 download.file(url, destfile, mode="wb")
 
-datajson <- fromJSON('timeseries.json')
+datajson <- jsonlite::fromJSON('timeseries.json')
 
-data <- reshape2::melt(datajson)[, c("L1", "L2", "L3", "value")]
+#data <- reshape2::melt(datajson)
 
-dataset <- reshape2::dcast(data, L1+L2~L3)
+dataset <- reshape2::melt(datajson, id.vars = c("date", "confirmed","deaths","recovered"))
 
-colnames(dataset) <- c("Country", "Days", "Confirmed", "Date","Deaths", "Recovered" )
+#dataset <- reshape2::dcast(data, date+~L3)
 
-#dataset$Date <- as.Date(dataset$Date, format = "%Y-%m-%d")
+colnames(dataset) <- c("Date","Confirmed",  "Deaths", "Recovered","Country")
 
 dataset$Confirmed <- as.integer(dataset$Confirmed)
 
@@ -34,78 +36,102 @@ dataset$Deaths <- as.integer(dataset$Deaths)
 
 dataset$Recovered <- as.integer(dataset$Recovered)
 
-#dataset$Country <- as.factor(dataset$Country) ### see if factor or character!!!!
-
 Countries <- as.factor(unique(dataset$Country))
 
-dataset <- dataset[order(dataset$Country, -dataset$Confirmed, -dataset$Days),]
+#dataset <- dataset[order(dataset$Country, -dataset$Confirmed, -dataset$Date),]
+
+dataset <- dataset[order(dataset$Country, -dataset$Confirmed),]
+
+dataset$Date <- as.Date(dataset$Date, format = "%Y-%m-%d")
+
+#dataset$Date2 <- format(dataset$Date, "%d-%m-%Y")
+
+#Tot_confirmed <-tapply(dataset$Confirmed, dataset$Date, FUN=sum)
+total_confirmed <- aggregate(dataset$Confirmed, by=list(Category=dataset$Date), FUN=sum)
+colnames(total_confirmed) <- c("Date","Confirmed")
+
+total_death <- aggregate(dataset$Deaths, by=list(Category=dataset$Date), FUN=sum)
+colnames(total_death) <- c("Date","Deaths")
+
+coeff = 10
+
+population <- read.csv('~/Dropbox/Covid19/Covid19/WPopulation.csv', stringsAsFactors = F, header = TRUE)
+#####################
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
    
    # Application title
-   titlePanel("COVID-19 PROBLEM"),
-   p("Diagrams illustrating the increase number of cases of COVID-19 in different countries"),
-   tabsetPanel(
-     tabPanel("Diagrams")
-   ),
+   headerPanel("COVID-19 PROBLEM"),
+   p("Diagrams illustrating the increase number of cases of COVID-19 in different countries."),
    
-   sidebarLayout(
-      sidebarPanel(
-         selectInput("countryInput", "Country",
-                     choices = Countries, selected = "")
-      ),
+   plotOutput("TOTAL"),
+   
+   p("Data for each Country"),
+   
+    sidebarPanel(
+       selectInput("countryInput", "Country",
+                   choices = Countries, selected = "")
+    ),
       
       # Show a plot of the generated distribution
       mainPanel(
-        plotOutput("graph"),
-        br(), br(),
-        plotOutput("deaths"),
-        br(),
-        plotOutput("recover"),
-        br(),
-        tableOutput("results")
+        tabsetPanel(
+          tabPanel("Contamined", plotOutput("graph")),
+          tabPanel("Deaths", plotOutput("deaths")),
+          tabPanel("EvolutionTable", dataTableOutput("results"))
+          
       )
-   )
-)
+ ))
+
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
   filtered <- reactive({dataset[dataset$Country==input$countryInput, ]})
   
-    output$results <- renderTable({
-#      kable(filtered)
-      filtered()
+    output$results <- renderDataTable({
+      filtered() 
+    })
+    
+    output$TOTAL <- renderPlot({
+      ggplot()+
+        geom_area(mapping = aes(x=total_confirmed$Date, y=total_confirmed$Confirmed), stat = "identity", fill = "darkblue")+
+        geom_area(mapping = aes(x=total_death$Date, y=total_death$Deaths*coeff), fill = "red")+
+        theme_bw(base_size = 25) +
+        scale_y_continuous(name="Confirmed Cases", labels = scales::comma,
+                           sec.axis = sec_axis(~ . * 0.1, name = "Deaths",labels = scales::comma))+
+        ggtitle("CONFIRMED CASES OF COVID-19")+
+        xlab("")+
+        theme(
+          axis.title.y = element_text(color = "blue"),
+          axis.ticks.y = element_line(color = "blue"),
+          axis.line.y = element_line(color = "blue"),
+          axis.text.y = element_text(color = "blue"),
+          axis.title.y.right = element_text(color = "red"),
+          axis.ticks.y.right = element_line(color = "red"),
+          axis.line.y.right = element_line(color = "red"),
+          axis.text.y.right = element_text(color = "red"))
+      
     })
     
     output$graph <- renderPlot({
-      ggplot(filtered(), aes(x=Days, y=Confirmed))+
+      ggplot(filtered(), aes(x=Date, y=Confirmed))+
         geom_bar(stat = "identity", fill = "darkblue")+
         theme_bw(base_size = 25) +
         ggtitle("CONFIRMED CASES OF COVID-19")+
         ylab("Confirmed Cases")+
-        xlab("Days")
+        xlab("")
     
    })
     
     output$deaths <- renderPlot({
-      ggplot(filtered(), aes(x=Days, y=Deaths))+
+      ggplot(filtered(), aes(x=Date, y=Deaths))+
         geom_bar(stat = "identity", fill = "darkblue")+
         theme_bw(base_size = 25) +
         ggtitle("DEATHS FROM COVID-19")+
         ylab("Deaths Cases")+
-        xlab("Days")
-      
-    })
-    
-    output$recover <- renderPlot({
-      ggplot(filtered(), aes(x=Days, y=Recovered))+
-        geom_bar(stat = "identity", fill = "darkblue")+
-        theme_bw(base_size = 25) +
-        ggtitle("RECOVERED FROM COVID-19")+
-        ylab("Recovered Cases")+
-        xlab("Days")
+        xlab("")
       
     })
 }
