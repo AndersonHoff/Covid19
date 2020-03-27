@@ -53,8 +53,6 @@ colnames(total_confirmed) <- c("Date","Confirmed")
 total_death <- aggregate(dataset$Deaths, by=list(Category=dataset$Date), FUN=sum)
 colnames(total_death) <- c("Date","Deaths")
 
-coeff = 10
-
 population <- read.csv('~/Dropbox/Covid19/Covid19/WPopulation.csv', stringsAsFactors = F, header = TRUE)
 #####################
 
