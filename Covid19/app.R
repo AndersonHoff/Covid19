@@ -44,6 +44,8 @@ dataset <- dataset[order(dataset$Country, -dataset$Confirmed),]
 
 dataset$Date <- as.Date(dataset$Date, format = "%Y-%m-%d")
 
+coeff = 10
+################################################################
 #dataset$Date2 <- format(dataset$Date, "%d-%m-%Y")
 
 #Tot_confirmed <-tapply(dataset$Confirmed, dataset$Date, FUN=sum)
@@ -52,8 +54,25 @@ colnames(total_confirmed) <- c("Date","Confirmed")
 
 total_death <- aggregate(dataset$Deaths, by=list(Category=dataset$Date), FUN=sum)
 colnames(total_death) <- c("Date","Deaths")
+##################################################################
+population <- read.csv('WPopulation.csv', stringsAsFactors = F, header = TRUE)
 
-population <- read.csv('~/Dropbox/Covid19/Covid19/WPopulation.csv', stringsAsFactors = F, header = TRUE)
+max_confirmed <- aggregate(dataset$Confirmed, by = list(dataset$Country), max)
+
+colnames(max_confirmed) <- c("Country", "Confirmed")
+
+max_country <- merge(population, max_confirmed, by="Country" )
+
+max_country$Percentual <- (max_country$Confirmed/max_country$Population)*100
+
+max_country <- max_country %>%
+  mutate(rank=rank(-Percentual), 
+         Value_rel=Percentual/Percentual[rank==1],
+         Value_lbl = paste0("", Percentual)) %>%
+  filter(rank<=20)
+
+max_country <- max_country[order(-max_country$rank),]
+
 #####################
 
 # Define UI for application that draws a histogram
@@ -64,6 +83,7 @@ ui <- fluidPage(
    p("Diagrams illustrating the increase number of cases of COVID-19 in different countries."),
    
    plotOutput("TOTAL"),
+   plotOutput("Percentual"),
    
    p("Data for each Country"),
    
@@ -96,7 +116,7 @@ server <- function(input, output) {
       ggplot()+
         geom_area(mapping = aes(x=total_confirmed$Date, y=total_confirmed$Confirmed), stat = "identity", fill = "darkblue")+
         geom_area(mapping = aes(x=total_death$Date, y=total_death$Deaths*coeff), fill = "red")+
-        theme_bw(base_size = 25) +
+        theme_bw(base_size = 22) +
         scale_y_continuous(name="Confirmed Cases", labels = scales::comma,
                            sec.axis = sec_axis(~ . * 0.1, name = "Deaths",labels = scales::comma))+
         ggtitle("CONFIRMED CASES OF COVID-19")+
@@ -111,6 +131,16 @@ server <- function(input, output) {
           axis.line.y.right = element_line(color = "red"),
           axis.text.y.right = element_text(color = "red"))
       
+    })
+    
+    output$Percentual <- renderPlot({
+      ggplot(max_country, aes(x=Country, y=Percentual))+
+        geom_bar(stat = "identity", fill = "darkblue")+
+        theme_bw(base_size = 17) +
+        ggtitle("% OF CONFIRMED CASES X TOTAL POPULATION (20 highest rates)")+
+        ylab("% of total population")+
+        xlab("Country")+
+        coord_flip()
     })
     
     output$graph <- renderPlot({
