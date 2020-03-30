@@ -38,8 +38,6 @@ dataset$Recovered <- as.integer(dataset$Recovered)
 
 Countries <- as.factor(unique(dataset$Country))
 
-#dataset <- dataset[order(dataset$Country, -dataset$Confirmed, -dataset$Date),]
-
 dataset <- dataset[order(dataset$Country, -dataset$Confirmed),]
 
 dataset$Date <- as.Date(dataset$Date, format = "%Y-%m-%d")
@@ -54,6 +52,7 @@ colnames(total_confirmed) <- c("Date","Confirmed")
 
 total_death <- aggregate(dataset$Deaths, by=list(Category=dataset$Date), FUN=sum)
 colnames(total_death) <- c("Date","Deaths")
+
 ##################################################################
 population <- read.csv('WPopulation.csv', stringsAsFactors = F, header = TRUE)
 
@@ -71,33 +70,45 @@ max_country <- max_country %>%
          Value_lbl = paste0("", Percentual)) %>%
   filter(rank<=20)
 
-max_country <- max_country[order(-max_country$rank),]
+max_country <- max_country[order(max_country$rank),]
 #############################
 #install.packages("rworldmap")
-library(rworldmap)
+#library(rworldmap)
 
 #create a map-shaped window
-mapDevice('x11')
+#mapDevice('x11')
 #join to a coarse resolution map
-spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", nameJoinColumn="Country")
+#spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", nameJoinColumn="Country")
 
-mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 16,catMethod="fixedWidth", 
-               colourPalette="diverging")
+#mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 16,catMethod="fixedWidth", 
+#               colourPalette="diverging")
 
-savePlot(filename=paste0("map.png"),type="png")
-dev.off()
-#####################
+#savePlot(filename=paste0("www/map.png"),type="png")
+#dev.off()
+###########
+
+#library(caTools)
+#bargif <- read.gif('COVID.gif')
+
+##################################################################
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
    
    # Application title
-   headerPanel("COVID-19 PROBLEM"),
-   p("Diagrams illustrating the increase number of cases of COVID-19 in different countries."),
+   headerPanel("COVID-19 PANDEMIC"),
+   br(),
+   p("Diagrams illustrating the increasing of COVID-19 case numbers in different countries."),
+   br(),
    
+#   downloadLink("testgif", label = "EVOLUTION GIF"),
    plotOutput("TOTAL"),
+   hr(),
+   p("The map below illustrates the countries with highest confirmed cases of 
+     COVID-19"),
+   img(src="map.png"),
+   hr(),
    plotOutput("Percentual"),
-   
    p("Data for each Country"),
    
     sidebarPanel(
@@ -132,7 +143,7 @@ server <- function(input, output) {
         theme_bw(base_size = 22) +
         scale_y_continuous(name="Confirmed Cases", labels = scales::comma,
                            sec.axis = sec_axis(~ . * 0.1, name = "Deaths",labels = scales::comma))+
-        ggtitle("CONFIRMED CASES OF COVID-19")+
+        ggtitle("CONFIRMED (blue) and DEATH (red) CASES OF COVID-19")+
         xlab("")+
         theme(
           axis.title.y = element_text(color = "blue"),
@@ -160,8 +171,8 @@ server <- function(input, output) {
       ggplot(filtered(), aes(x=Date, y=Confirmed))+
         geom_bar(stat = "identity", fill = "darkblue")+
         theme_bw(base_size = 25) +
+        scale_y_continuous(name="Confirmed Cases", labels = scales::comma)+
         ggtitle("CONFIRMED CASES OF COVID-19")+
-        ylab("Confirmed Cases")+
         xlab("")
     
    })
@@ -175,6 +186,16 @@ server <- function(input, output) {
         xlab("")
       
     })
+    
+#    output$testgif <- downloadHandler(
+#      filename = function(){
+#        paste('COVID-', content = Sys.Date(), contentType = "gif")
+#      },
+#      content = function(file) {
+#        read.gif(COVID, file)
+#      }
+#    )
+        
 }
 
 # Run the application 
