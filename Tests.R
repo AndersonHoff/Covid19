@@ -108,17 +108,17 @@ anim = ggplot(dataset4, aes(rank, group = Country, fill = as.factor(Country),
         plot.caption =element_text(size=20, hjust=0.5, face="italic", color="black"),
         plot.background=element_blank(),
         plot.margin = margin(1,4, 1, 8, "cm")) +
-  transition_states(Date, transition_length = 3, state_length = 1) +
+  transition_states(Date, transition_length = 3, state_length = 1, wrap = FALSE) +
   ease_aes('linear') + enter_fade() + exit_shrink() +
   view_follow(fixed_x = TRUE) +
   labs(title = 'COVID19 Confirmed Cases: {closest_state}', 
        subtitle = "Top 10 Countries",
        caption  = "By Anderson Hoff - Data Source: https://pomber.github.io/covid19/timeseries.json") 
   
-#tra.state - wrap = FALSE # 
+#tra.state -  # 
 
-animate(anim, nframes = 500,fps = 8,  width = 1200, height = 1000, 
-        renderer = gifski_renderer("gganim6.gif"), end_pause = 20,
+animate(anim, nframes = 500,fps = 10,  width = 1200, height = 1000, 
+        renderer = gifski_renderer("gganim6.gif"), end_pause = 40,
         start_pause = 0)
 
 for_mp4 <- animate(anim, nframes = 200,fps = 10,  width = 1200, height = 1000, 
@@ -127,4 +127,21 @@ for_mp4 <- animate(anim, nframes = 200,fps = 10,  width = 1200, height = 1000,
 anim_save("covid.mp4", animation = for_mp4)
                    
 ######################
-  
+
+max_confirmed <- aggregate(dataset$Confirmed, by = list(dataset$Country), max)
+
+colnames(max_confirmed) <- c("Country", "Confirmed")
+
+#install.packages("rworldmap")
+library(rworldmap)
+
+#create a map-shaped window
+mapDevice('x11')
+#join to a coarse resolution map
+spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", nameJoinColumn="Country")
+
+mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 16,catMethod="fixedWidth", 
+               colourPalette="diverging")
+
+savePlot(filename=paste0("map.png"),type="png")
+dev.off()

@@ -18,7 +18,7 @@ library(jsonlite)
 ###############################
 url <- "https://pomber.github.io/covid19/timeseries.json"
 destfile <- "timeseries.json"
-download.file(url, destfile, mode="wb")
+download.file(url, destfile,method = "curl", mode="wb")
 
 datajson <- jsonlite::fromJSON('timeseries.json')
 
@@ -72,7 +72,20 @@ max_country <- max_country %>%
   filter(rank<=20)
 
 max_country <- max_country[order(-max_country$rank),]
+#############################
+#install.packages("rworldmap")
+library(rworldmap)
 
+#create a map-shaped window
+mapDevice('x11')
+#join to a coarse resolution map
+spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", nameJoinColumn="Country")
+
+mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 16,catMethod="fixedWidth", 
+               colourPalette="diverging")
+
+savePlot(filename=paste0("map.png"),type="png")
+dev.off()
 #####################
 
 # Define UI for application that draws a histogram
