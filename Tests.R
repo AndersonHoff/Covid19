@@ -114,8 +114,6 @@ anim = ggplot(dataset4, aes(rank, group = Country, fill = as.factor(Country),
   labs(title = 'COVID19 Confirmed Cases: {closest_state}', 
        subtitle = "Top 10 Countries",
        caption  = "By Anderson Hoff - Data Source: https://pomber.github.io/covid19/timeseries.json") 
-  
-#tra.state -  # 
 
 animate(anim, nframes = 500,fps = 10,  width = 1200, height = 1000, 
         renderer = gifski_renderer("gganim6.gif"), end_pause = 40,
@@ -132,7 +130,6 @@ max_confirmed <- aggregate(dataset$Confirmed, by = list(dataset$Country), max)
 
 colnames(max_confirmed) <- c("Country", "Confirmed")
 
-#install.packages("rworldmap")
 library(rworldmap)
 
 #create a map-shaped window
