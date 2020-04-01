@@ -1,16 +1,8 @@
 #
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
 
 library(shiny)
 library(dplyr)
 library(ggplot2)
-#library(RJSONIO)
 library(magrittr)
 library(reshape2)
 library(jsonlite)
@@ -22,11 +14,7 @@ download.file(url, destfile,method = "curl", mode="wb")
 
 datajson <- jsonlite::fromJSON('timeseries.json')
 
-#data <- reshape2::melt(datajson)
-
 dataset <- reshape2::melt(datajson, id.vars = c("date", "confirmed","deaths","recovered"))
-
-#dataset <- reshape2::dcast(data, date+~L3)
 
 colnames(dataset) <- c("Date","Confirmed",  "Deaths", "Recovered","Country")
 
@@ -44,9 +32,7 @@ dataset$Date <- as.Date(dataset$Date, format = "%Y-%m-%d")
 
 coeff = 10
 ################################################################
-#dataset$Date2 <- format(dataset$Date, "%d-%m-%Y")
 
-#Tot_confirmed <-tapply(dataset$Confirmed, dataset$Date, FUN=sum)
 total_confirmed <- aggregate(dataset$Confirmed, by=list(Category=dataset$Date), FUN=sum)
 colnames(total_confirmed) <- c("Date","Confirmed")
 
@@ -92,7 +78,7 @@ max_country <- max_country[order(max_country$rank),]
 
 ##################################################################
 
-# Define UI for application that draws a histogram
+# Define UI for application
 ui <- fluidPage(
    
    # Application title
@@ -116,7 +102,6 @@ ui <- fluidPage(
                    choices = Countries, selected = "")
     ),
       
-      # Show a plot of the generated distribution
       mainPanel(
         tabsetPanel(
           tabPanel("Contamined", plotOutput("graph")),
@@ -127,7 +112,7 @@ ui <- fluidPage(
  ))
 
 
-# Define server logic required to draw a histogram
+# Define server logic 
 server <- function(input, output) {
   
   filtered <- reactive({dataset[dataset$Country==input$countryInput, ]})
