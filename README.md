@@ -12,4 +12,4 @@ http://anderson-hoff.shinyapps.io/Covid19
 
 A gif showing the evolution in case numbers for each day was also built. I will include this gif in near future.
 
-![Image description](map.png)
+![I fucked it](map.png)
