@@ -14,7 +14,8 @@ download.file(url, destfile,method = "curl", mode="wb")
 
 datajson <- jsonlite::fromJSON('timeseries.json')
 
-dataset <- reshape2::melt(datajson, id.vars = c("date", "confirmed","deaths","recovered"))
+dataset <- reshape2::melt(datajson, id.vars = c("date", "confirmed","deaths",
+                                                "recovered"))
 
 colnames(dataset) <- c("Date","Confirmed",  "Deaths", "Recovered","Country")
 
@@ -39,9 +40,16 @@ eachday <- eachday %>%
   group_by(Country) %>%
   mutate(diary = Confirmed - lag(Confirmed, default = 0))
 
+deathday <- dataset[order(dataset$Country, dataset$Confirmed),]
+deathday <- deathday %>%
+  select(-Recovered) %>%
+  group_by(Country) %>%
+  mutate(diarydeaths = Deaths - lag(Deaths, default = 0))
+
 ###############################################################
 
-total_confirmed <- aggregate(dataset$Confirmed, by=list(Category=dataset$Date), FUN=sum)
+total_confirmed <- aggregate(dataset$Confirmed, by=list(Category=dataset$Date), 
+                             FUN=sum)
 colnames(total_confirmed) <- c("Date","Confirmed")
 
 total_death <- aggregate(dataset$Deaths, by=list(Category=dataset$Date), FUN=sum)
@@ -73,18 +81,35 @@ max_country <- max_country[order(max_country$rank),]
 #############################
 
 library(rworldmap)
-
+#rworldmapExamples()
+## log palette ##
 #create a map-shaped window
 mapDevice('x11')
 #join to a coarse resolution map
-spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", nameJoinColumn="Country")
+spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", 
+                            nameJoinColumn="Country")
 
-mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 16,catMethod="fixedWidth", 
+mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 20,
+               catMethod="logFixedWidth", 
+               colourPalette="diverging")
+
+savePlot(filename=paste0("www/logmap.png"),type="png")
+dev.off()
+
+## normal palette ##
+mapDevice('x11')
+
+spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", 
+                            nameJoinColumn="Country")
+
+mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 20,
+               catMethod="fixedWidth", 
                colourPalette="diverging")
 
 savePlot(filename=paste0("www/map.png"),type="png")
 dev.off()
 
+rm(url,spdf, destfile, datajson)
 ########################################################
 
 #library(caTools)
@@ -98,7 +123,8 @@ ui <- fluidPage(
    # Application title
    headerPanel("COVID-19 PANDEMIC"),
    br(),
-   p("Diagrams illustrating the increasing of COVID-19 case numbers in different countries."),
+   p("Diagrams illustrating the increasing of COVID-19 case numbers in 
+     different countries."),
    br(),
    
 #   downloadLink("testgif", label = "EVOLUTION GIF"),
@@ -108,9 +134,13 @@ ui <- fluidPage(
    hr(),
    plotOutput("Percentual"),
    hr(),
-   p("The map below illustrates the countries with highest confirmed cases of 
+   p("The maps below illustrates the countries with highest confirmed cases of 
      COVID-19"),
    img(src="map.png"),
+   p("As can be seen, the USA has a high number of cases, which makes difficult 
+     to see other countries in this scale. So I used a log palette scale to 
+     makes the differences between other countries visible."),
+   img(src="logmap.png"),
    hr(),
    p("Data relative to each Country"),
    
@@ -123,9 +153,9 @@ ui <- fluidPage(
         tabsetPanel(
           tabPanel("Contamined", plotOutput("graph")),
           tabPanel("Deaths", plotOutput("deaths")),
-          tabPanel("New Cases", plotOutput("newcases"))
+          tabPanel("New Cases", plotOutput("newcases")),
+          tabPanel("New Deaths", plotOutput("newdeaths"))
 #          tabPanel("EvolutionTable", dataTableOutput("results"))
-          
       )
  ))
 
@@ -141,11 +171,15 @@ server <- function(input, output) {
     
     output$TOTAL <- renderPlot({
       ggplot()+
-        geom_area(mapping = aes(x=total_confirmed$Date, y=total_confirmed$Confirmed), stat = "identity", fill = "darkblue")+
-        geom_area(mapping = aes(x=total_death$Date, y=total_death$Deaths*coeff), fill = "red")+
+        geom_area(mapping = aes(x=total_confirmed$Date, 
+                                y=total_confirmed$Confirmed), stat = "identity", 
+                  fill = "darkblue")+
+        geom_area(mapping = aes(x=total_death$Date, y=total_death$Deaths*coeff), 
+                  fill = "red")+
         theme_bw(base_size = 22) +
         scale_y_continuous(name="Confirmed Cases", labels = scales::comma,
-                           sec.axis = sec_axis(~ . * 0.1, name = "Deaths",labels = scales::comma))+
+                           sec.axis = sec_axis(~ . * 0.1, name = "Deaths",
+                                               labels = scales::comma))+
         ggtitle("CONFIRMED (blue) and DEATH (red) CASES OF COVID-19")+
         xlab("")+
         theme(
@@ -162,7 +196,9 @@ server <- function(input, output) {
     
     output$Evolution <- renderPlot({
       ggplot()+
-        geom_bar(mapping = aes(x=day_confirmed$Date, y=day_confirmed$Day_Confirmed), stat = "identity", fill = "darkblue")+
+        geom_bar(mapping = aes(x=day_confirmed$Date, 
+                               y=day_confirmed$Day_Confirmed), 
+                 stat = "identity", fill = "darkblue")+
         theme_bw(base_size = 22) +
         ggtitle("Confirmed cases of COVID-19 in each day")+
         ylab("New Cases")+
@@ -191,7 +227,7 @@ server <- function(input, output) {
     
     output$deaths <- renderPlot({
       ggplot(filtered(), aes(x=Date, y=Deaths))+
-        geom_bar(stat = "identity", fill = "darkblue")+
+        geom_bar(stat = "identity", fill = "red")+
         theme_bw(base_size = 25) +
         ggtitle("DEATHS FROM COVID-19")+
         ylab("Deaths Cases")+
@@ -205,12 +241,23 @@ server <- function(input, output) {
       ggplot(filtered2(), aes(x=Date, y=diary))+
         geom_bar(stat = "identity", fill = "darkblue")+
         theme_bw(base_size = 25) +
-        ggtitle("DEATHS FROM COVID-19")+
-        ylab("Deaths Cases")+
+        ggtitle("NEW CONFIRMED CASES FOR EACH DAY")+
+        ylab("New Confirmed Cases")+
         xlab("")
       
     })
     
+    filtered3 <- reactive({deathday[deathday$Country==input$countryInput, ]})
+    
+    output$newdeaths <- renderPlot({
+      ggplot(filtered3(), aes(x=Date, y=diarydeaths))+
+        geom_bar(stat = "identity", fill = "red")+
+        theme_bw(base_size = 25) +
+        ggtitle("NEW DEATHS FOR EACH DAY")+
+        ylab("New Death Cases")+
+        xlab("")
+      
+    })
 #    output$testgif <- downloadHandler(
 #      filename = function(){
 #        paste('COVID-', content = Sys.Date(), contentType = "gif")
