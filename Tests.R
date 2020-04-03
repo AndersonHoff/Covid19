@@ -1,28 +1,31 @@
 library(dplyr)
+library(tibbletime)
+library(lubridate)
+library(tidyverse)
 
-#population <- read.csv('POP.csv', stringsAsFactors = F, header = TRUE)
+population <- read.csv('POP.csv', stringsAsFactors = F, header = TRUE)
 
-#population <- population %>% 
-#  select(-X, -X.1, -X.2)
+population <- population %>% 
+  select(-X, -X.1, -X.2)
 
-#colnames(population) <- c("Ranking", "Country", "Population")
+colnames(population) <- c("Ranking", "Country", "Population")
 
-#population$Population <- as.numeric(gsub(",", "", population$Population))
+population$Population <- as.numeric(gsub(",", "", population$Population))
 
-#population2 <- population %>% 
-#  select(Population)
+population2 <- population %>% 
+  select(Population)
 
-#population$Population <- (population$Population)*1000
+population$Population <- (population$Population)*1000
 
-#newdat <- population[order(population$Country),]
+newdat <- population[order(population$Country),]
 
-#conferename<- as.data.frame(Countries)
+conferename<- as.data.frame(Countries)
 
-#confere <- conferename[order(conferename),]
+confere <- conferename[order(conferename),]
 
-#result <- merge(data.frame(newdat, row.names=NULL), data.frame(confere, row.names=NULL), by = 0, all = TRUE)[-1]
+result <- merge(data.frame(newdat, row.names=NULL), data.frame(confere, row.names=NULL), by = 0, all = TRUE)[-1]
 
-#write.csv(population, file="WPopulation.csv", quote = T, row.names=F)
+write.csv(population, file="WPopulation.csv", quote = T, row.names=F)
 
 population <- read.csv('~/Dropbox/Covid19/Covid19/WPopulation.csv', stringsAsFactors = F, header = TRUE)
 
@@ -51,12 +54,7 @@ ggplot(test4, aes(x=Country, y=Percentual))+
   coord_flip()+
   ggsave("plot.png", width = 8, height = 5)
 
-##############################theme(axis.text.x=element_text(angle = 90, hjust = 0))+
-
-library(tibbletime)
-library(dplyr)
-library(lubridate)
-library(tidyverse)
+##############################
 
 dataset <- dataset %>% 
   select(-Recovered)
