@@ -24,7 +24,7 @@ library(dplyr)
 
 #write.csv(population, file="WPopulation.csv", quote = T, row.names=F)
 
-test <- read.csv('~/Dropbox/Covid19/Covid19/WPopulation.csv', stringsAsFactors = F, header = TRUE)
+population <- read.csv('~/Dropbox/Covid19/Covid19/WPopulation.csv', stringsAsFactors = F, header = TRUE)
 
 test3 <- aggregate(dataset$Confirmed, by = list(dataset$Country), max)
 
