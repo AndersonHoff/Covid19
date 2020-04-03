@@ -1,4 +1,4 @@
-#
+############### App of COVID-19 evolution ######################
 
 library(shiny)
 library(dplyr)
@@ -33,13 +33,25 @@ dataset$Date <- as.Date(dataset$Date, format = "%Y-%m-%d")
 coeff = 10
 ################################################################
 
+eachday <- dataset[order(dataset$Country, dataset$Confirmed),]
+eachday <- eachday %>%
+  select(-Recovered) %>%
+  group_by(Country) %>%
+  mutate(diary = Confirmed - lag(Confirmed, default = 0))
+
+###############################################################
+
 total_confirmed <- aggregate(dataset$Confirmed, by=list(Category=dataset$Date), FUN=sum)
 colnames(total_confirmed) <- c("Date","Confirmed")
 
 total_death <- aggregate(dataset$Deaths, by=list(Category=dataset$Date), FUN=sum)
 colnames(total_death) <- c("Date","Deaths")
 
+day_confirmed <- aggregate(eachday$diary, by=list(Category=eachday$Date), FUN=sum)
+colnames(day_confirmed) <- c("Date","Day_Confirmed ")
+
 ##################################################################
+
 population <- read.csv('WPopulation.csv', stringsAsFactors = F, header = TRUE)
 
 max_confirmed <- aggregate(dataset$Confirmed, by = list(dataset$Country), max)
@@ -57,26 +69,28 @@ max_country <- max_country %>%
   filter(rank<=20)
 
 max_country <- max_country[order(max_country$rank),]
+
 #############################
-#install.packages("rworldmap")
-#library(rworldmap)
+
+library(rworldmap)
 
 #create a map-shaped window
-#mapDevice('x11')
+mapDevice('x11')
 #join to a coarse resolution map
-#spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", nameJoinColumn="Country")
+spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", nameJoinColumn="Country")
 
-#mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 16,catMethod="fixedWidth", 
-#               colourPalette="diverging")
+mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 16,catMethod="fixedWidth", 
+               colourPalette="diverging")
 
-#savePlot(filename=paste0("www/map.png"),type="png")
-#dev.off()
-###########
+savePlot(filename=paste0("www/map.png"),type="png")
+dev.off()
+
+########################################################
 
 #library(caTools)
 #bargif <- read.gif('COVID.gif')
 
-##################################################################
+########################################################
 
 # Define UI for application
 ui <- fluidPage(
@@ -90,12 +104,15 @@ ui <- fluidPage(
 #   downloadLink("testgif", label = "EVOLUTION GIF"),
    plotOutput("TOTAL"),
    hr(),
+   plotOutput("Evolution"),
+   hr(),
+   plotOutput("Percentual"),
+   hr(),
    p("The map below illustrates the countries with highest confirmed cases of 
      COVID-19"),
    img(src="map.png"),
    hr(),
-   plotOutput("Percentual"),
-   p("Data for each Country"),
+   p("Data relative to each Country"),
    
     sidebarPanel(
        selectInput("countryInput", "Country",
@@ -106,7 +123,8 @@ ui <- fluidPage(
         tabsetPanel(
           tabPanel("Contamined", plotOutput("graph")),
           tabPanel("Deaths", plotOutput("deaths")),
-          tabPanel("EvolutionTable", dataTableOutput("results"))
+          tabPanel("New Cases", plotOutput("newcases"))
+#          tabPanel("EvolutionTable", dataTableOutput("results"))
           
       )
  ))
@@ -117,9 +135,9 @@ server <- function(input, output) {
   
   filtered <- reactive({dataset[dataset$Country==input$countryInput, ]})
   
-    output$results <- renderDataTable({
-      filtered() 
-    })
+#    output$results <- renderDataTable({
+#      filtered() 
+#    })
     
     output$TOTAL <- renderPlot({
       ggplot()+
@@ -140,6 +158,15 @@ server <- function(input, output) {
           axis.line.y.right = element_line(color = "red"),
           axis.text.y.right = element_text(color = "red"))
       
+    })
+    
+    output$Evolution <- renderPlot({
+      ggplot()+
+        geom_bar(mapping = aes(x=day_confirmed$Date, y=day_confirmed$Day_Confirmed), stat = "identity", fill = "darkblue")+
+        theme_bw(base_size = 22) +
+        ggtitle("Confirmed cases of COVID-19 in each day")+
+        ylab("New Cases")+
+        xlab("")
     })
     
     output$Percentual <- renderPlot({
@@ -164,6 +191,18 @@ server <- function(input, output) {
     
     output$deaths <- renderPlot({
       ggplot(filtered(), aes(x=Date, y=Deaths))+
+        geom_bar(stat = "identity", fill = "darkblue")+
+        theme_bw(base_size = 25) +
+        ggtitle("DEATHS FROM COVID-19")+
+        ylab("Deaths Cases")+
+        xlab("")
+      
+    })
+    
+    filtered2 <- reactive({eachday[eachday$Country==input$countryInput, ]})
+    
+    output$newcases <- renderPlot({
+      ggplot(filtered2(), aes(x=Date, y=diary))+
         geom_bar(stat = "identity", fill = "darkblue")+
         theme_bw(base_size = 25) +
         ggtitle("DEATHS FROM COVID-19")+
