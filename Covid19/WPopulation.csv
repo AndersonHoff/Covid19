@@ -1,0 +1,225 @@
+Ranking,Country,Population
+1,China,1392730000
+2,India,1352617000
+3,US,327167000
+4,Indonesia,267663000
+5,Pakistan,212215000
+6,Brazil,209469000
+7,Nigeria,195875000
+8,Bangladesh,161356000
+9,Russian Federation,144478000
+10,Japan,126529000
+11,Mexico,126191000
+12,Ethiopia,109225000
+13,Philippines,106652000
+14,Egypt,98424000
+15,Vietnam,95540000
+16,Congo (Kinshasa),84068000
+17,Germany,82928000
+18,Turkey,82320000
+19,Iran,81800000
+20,Thailand,69429000
+21,France,66987000
+22,United Kingdom,66489000
+23,Italy,60431000
+24,South Africa,57780000
+25,Tanzania,56318000
+26,Burma,53708000
+27,"Korea, Rep.",51635000
+28,Kenya,51393000
+29,Colombia,49649000
+30,Spain,46724000
+31,Ukraine,44623000
+32,Argentina,44495000
+33,Uganda,42723000
+34,Algeria,42228000
+35,Sudan,41802000
+36,Iraq,38434000
+37,Poland,37979000
+38,Afghanistan,37172000
+39,Canada,37059000
+40,Morocco,36029000
+41,Saudi Arabia,33700000
+42,Uzbekistan,32955000
+43,Peru,31989000
+44,Malaysia,31529000
+45,Angola,30810000
+46,Ghana,29767000
+47,Mozambique,29496000
+48,Venezuela,28870000
+49,"Yemen, Rep.",28499000
+50,Nepal,28088000
+51,Madagascar,26262000
+52,"Korea, South",25550000
+53,Cameroon,25216000
+54,Cote d'Ivoire,25069000
+55,Australia,24992000
+56,Niger,22443000
+57,Sri Lanka,21670000
+58,Burkina Faso,19752000
+59,Romania,19474000
+60,Mali,19078000
+61,Chile,18729000
+62,Kazakhstan,18276000
+63,Malawi,18143000
+64,Zambia,17352000
+65,Guatemala,17248000
+66,Netherlands,17231000
+67,Ecuador,17084000
+68,Syria,16906000
+69,Cambodia,16250000
+70,Senegal,15854000
+71,Chad,15478000
+72,Somalia,15008000
+73,Zimbabwe,14439000
+74,Guinea,12414000
+75,Rwanda,12302000
+76,Tunisia,11565000
+77,Benin,11485000
+78,Belgium,11422000
+79,Bolivia,11353000
+80,Cuba,11338000
+81,Burundi,11175000
+82,Haiti,11123000
+83,South Sudan,10976000
+84,Greece,10728000
+85,Dominican Republic,10627000
+86,Czech Republic,10626000
+87,Portugal,10282000
+88,Sweden,10183000
+89,Jordan,9956000
+90,Azerbaijan,9942000
+91,Hungary,9769000
+92,United Arab Emirates,9631000
+93,Honduras,9588000
+94,Belarus,9485000
+95,Tajikistan,9101000
+96,Israel,8884000
+97,Austria,8847000
+98,Papua New Guinea,8606000
+99,Switzerland,8517000
+100,Togo,7889000
+101,Sierra Leone,7650000
+102,"Hong Kong SAR, China",7451000
+103,Laos,7062000
+104,Bulgaria,7024000
+105,Serbia,6982000
+106,Paraguay,6956000
+107,Lebanon,6849000
+108,Libya,6679000
+109,Nicaragua,6466000
+110,El Salvador,6421000
+111,Kyrgyzstan,6316000
+112,Turkmenistan,5851000
+113,Denmark,5797000
+114,Singapore,5639000
+115,Finland,5518000
+116,Slovak Republic,5447000
+117,Norway,5314000
+118,Congo (Brazzaville),5244000
+119,Costa Rica,4999000
+120,New Zealand,4886000
+121,Ireland,4854000
+122,Oman,4829000
+123,Liberia,4819000
+124,Central African Republic,4666000
+125,West Bank and Gaza,4569000
+126,Mauritania,4403000
+127,Panama,4177000
+128,Kuwait,4137000
+129,Croatia,4089000
+130,Georgia,3731000
+131,Moldova,3546000
+132,Uruguay,3449000
+133,Bosnia and Herzegovina,3324000
+134,Puerto Rico,3195000
+135,Mongolia,3170000
+136,Armenia,2952000
+137,Jamaica,2935000
+138,Albania,2866000
+139,Lithuania,2790000
+140,Qatar,2782000
+141,Namibia,2448000
+142,Gambia,2280000
+143,Botswana,2254000
+144,Gabon,2119000
+145,Lesotho,2108000
+146,North Macedonia,2083000
+147,Slovenia,2067000
+148,Latvia,1927000
+149,Guinea-Bissau,1874000
+150,Kosovo,1845000
+151,Bahrain,1569000
+152,Trinidad and Tobago,1390000
+153,Estonia,1321000
+154,Equatorial Guinea,1309000
+155,Timor-Leste,1268000
+156,Mauritius,1265000
+157,Cyprus,1189000
+158,Eswatini,1136000
+159,Djibouti,959000
+160,Fiji,883000
+161,Comoros,832000
+162,Guyana,779000
+163,Bhutan,754000
+164,Solomon Islands,653000
+165,"Macao SAR, China",632000
+166,Montenegro,622000
+167,Luxembourg,608000
+168,Suriname,576000
+169,Cabo Verde,544000
+170,Maldives,516000
+171,Malta,484000
+172,Brunei,429000
+173,Bahamas,386000
+174,Belize,383000
+175,Iceland,354000
+176,Vanuatu,293000
+177,Barbados,287000
+178,New Caledonia,284000
+179,French Polynesia,278000
+180,São Tomé and Principe,211000
+181,Samoa,196000
+182,Saint Lucia,182000
+183,Channel Islands,170000
+184,Guam,166000
+185,Curaçao,160000
+186,Kiribati,116000
+187,"Micronesia, Fed. Sts.",113000
+188,Grenada,111000
+189,Saint Vincent and the Grenadines,110000
+190,Virgin Islands (U.S.),107000
+191,Aruba,106000
+192,Tonga,103000
+193,Seychelles,97000
+194,Antigua and Barbuda,96000
+195,Isle of Man,84000
+196,Andorra,77000
+197,Dominica,72000
+198,Cayman Islands,64000
+199,Bermuda,64000
+200,Marshall Islands,58000
+201,Northern Mariana Islands,57000
+202,Greenland,56000
+203,American Samoa,55000
+204,Saint Kitts and Nevis,52000
+205,Faroe Islands,48000
+206,Sint Maarten (Dutch part),41000
+207,Monaco,39000
+208,Liechtenstein,38000
+209,Turks and Caicos Islands,38000
+210,St. Martin (French part),37000
+211,San Marino,34000
+212,Gibraltar,34000
+213,British Virgin Islands,30000
+214,Palau,18000
+215,Nauru,13000
+216,Tuvalu,12000
+217,Diamond Princess,24000000
+218,Holy See,24000000
+219,Eritrea,24000000
+220,Saint Kitts and Nevis,24000000
+221,Saint Lucia,24000000
+222,Saint Vincent and the Grenadines,24000000
+223,Slovakia,24000000
+224,Taiwan*,24000000
