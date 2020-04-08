@@ -58,12 +58,15 @@ colnames(total_death) <- c("Date","Deaths")
 day_confirmed <- aggregate(eachday$diary, by=list(Category=eachday$Date), FUN=sum)
 colnames(day_confirmed) <- c("Date","Day_Confirmed ")
 
+day_death <- aggregate(deathday$diarydeaths, by=list(Category=deathday$Date), FUN=sum)
+colnames(day_death) <- c("Date","Day_Death ")
+
+daydata <- merge(day_confirmed, day_death, by="Date")
 ##################################################################
 
 population <- read.csv('WPopulation.csv', stringsAsFactors = F, header = TRUE)
 
 max_confirmed <- aggregate(dataset$Confirmed, by = list(dataset$Country), max)
-
 colnames(max_confirmed) <- c("Country", "Confirmed")
 
 max_country <- merge(population, max_confirmed, by="Country" )
@@ -78,12 +81,16 @@ max_country <- max_country %>%
 
 max_country <- max_country[order(max_country$rank),]
 
+max_death <- aggregate(dataset$Deaths, by = list(dataset$Country), max)
+colnames(max_death) <- c("Country", "Deaths")
 #############################
 
 library(rworldmap)
 #rworldmapExamples()
 ## log palette ##
 #create a map-shaped window
+
+######### Confirmed #########
 mapDevice('x11')
 #join to a coarse resolution map
 spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", 
@@ -96,18 +103,30 @@ mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 20,
 savePlot(filename=paste0("www/logmap.png"),type="png")
 dev.off()
 
-## normal palette ##
+####### Deaths ########
 mapDevice('x11')
-
-spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", 
+spdf <- joinCountryData2Map(max_death, joinCode="NAME", 
                             nameJoinColumn="Country")
 
-mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 20,
-               catMethod="fixedWidth", 
+mapCountryData(spdf, nameColumnToPlot="Deaths", numCats = 20,
+               catMethod="logFixedWidth", 
                colourPalette="diverging")
 
-savePlot(filename=paste0("www/map.png"),type="png")
+savePlot(filename=paste0("www/deaths.png"),type="png")
 dev.off()
+########
+## normal palette ##
+#mapDevice('x11')
+
+#spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", 
+#                            nameJoinColumn="Country")
+
+#mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 20,
+#               catMethod="fixedWidth", 
+#               colourPalette="diverging")
+
+#savePlot(filename=paste0("www/map.png"),type="png")
+#dev.off()
 
 rm(url,spdf, destfile, datajson)
 ########################################################
@@ -121,10 +140,10 @@ rm(url,spdf, destfile, datajson)
 ui <- fluidPage(
    
    # Application title
-   headerPanel("COVID-19 PANDEMIC"),
+   headerPanel(h1("COVID-19 PANDEMIC", align="center")),
    br(),
-   p("Diagrams illustrating the increasing of COVID-19 case numbers in 
-     different countries."),
+   p(h2("Diagrams illustrating the increasing of COVID-19 case numbers in 
+     different countries.", align="center")),
    br(),
    
 #   downloadLink("testgif", label = "EVOLUTION GIF"),
@@ -134,10 +153,8 @@ ui <- fluidPage(
    hr(),
    plotOutput("Percentual"),
    hr(),
-   p("The maps below illustrates the countries with highest confirmed cases of 
-     COVID-19"),
-   img(src="map.png"),
-   p("As can be seen, the USA has a high number of cases, which makes difficult 
+   p("The map below illustrates the countries with highest confirmed cases of 
+     COVID-19. Since the USA has a high number of cases, it makes difficult 
      to see other countries in this scale. So I used a log palette scale to 
      makes the differences between other countries visible."),
    img(src="logmap.png"),
@@ -196,17 +213,31 @@ server <- function(input, output) {
     
     output$Evolution <- renderPlot({
       ggplot()+
-        geom_bar(mapping = aes(x=day_confirmed$Date, 
-                               y=day_confirmed$Day_Confirmed), 
-                 stat = "identity", fill = "darkblue")+
+        geom_col(mapping = aes(x=daydata$Date, 
+                               y=daydata$Day_Confirmed), 
+                 fill = "darkblue")+
+        geom_col(mapping = aes(x=daydata$Date, y=daydata$Day_Death*coeff/2), 
+                  fill = "red")+
         theme_bw(base_size = 22) +
-        ggtitle("Confirmed cases of COVID-19 in each day")+
-        ylab("New Cases")+
-        xlab("")
+        scale_y_continuous(name="Confirmed Cases", labels = scales::comma,
+                           sec.axis = sec_axis(~ . * 0.2, name = "Deaths",
+                                               labels = scales::comma))+
+        ggtitle("Confirmed (blue) and death (red) cases of COVID-19 in each day")+
+        xlab("")+
+        theme(
+          axis.title.y = element_text(color = "blue"),
+          axis.ticks.y = element_line(color = "blue"),
+          axis.line.y = element_line(color = "blue"),
+          axis.text.y = element_text(color = "blue"),
+          axis.title.y.right = element_text(color = "red"),
+          axis.ticks.y.right = element_line(color = "red"),
+          axis.line.y.right = element_line(color = "red"),
+          axis.text.y.right = element_text(color = "red"))
+      
     })
     
     output$Percentual <- renderPlot({
-      ggplot(max_country, aes(x=Country, y=Percentual))+
+      ggplot(max_country, aes(x=reorder(Country, Percentual), y=Percentual))+
         geom_bar(stat = "identity", fill = "darkblue")+
         theme_bw(base_size = 17) +
         ggtitle("% OF CONFIRMED CASES X TOTAL POPULATION (20 highest rates)")+
