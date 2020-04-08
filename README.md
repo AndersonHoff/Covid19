@@ -14,7 +14,7 @@ All the R code to run the app can be downloaded above.
 
 Also, I worked with the data and built a map with the number of cases for each country. 
 
-![A map of number of cases.](Covid19/www/map.png)
+![A map of number of cases.](Covid19/www/logmap.png)
 
 A gif showing the evolution in case numbers for each day was also built. The R code is included as Gif_Covid19.R. The result is pretty nice, as can be seen below.
 
