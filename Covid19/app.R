@@ -62,15 +62,14 @@ day_death <- aggregate(deathday$diarydeaths, by=list(Category=deathday$Date), FU
 colnames(day_death) <- c("Date","Day_Death ")
 
 daydata <- merge(day_confirmed, day_death, by="Date")
+daydata$lethal <- (daydata$Day_Death/daydata$Day_Confirmed)*100
 ##################################################################
 
 population <- read.csv('WPopulation.csv', stringsAsFactors = F, header = TRUE)
 
 max_confirmed <- aggregate(dataset$Confirmed, by = list(dataset$Country), max)
 colnames(max_confirmed) <- c("Country", "Confirmed")
-
 max_country <- merge(population, max_confirmed, by="Country" )
-
 max_country$Percentual <- (max_country$Confirmed/max_country$Population)*100
 
 max_country <- max_country %>%
@@ -83,12 +82,28 @@ max_country <- max_country[order(max_country$rank),]
 
 max_death <- aggregate(dataset$Deaths, by = list(dataset$Country), max)
 colnames(max_death) <- c("Country", "Deaths")
+deaths_max <- merge(population, max_death, by = "Country")
+deaths_max$Percentual <- (deaths_max$Deaths/deaths_max$Population)*100
+
+deaths_max <- deaths_max %>%
+  mutate(rank=rank(-Percentual),
+         Value_rel=Percentual/Percentual[rank==1],
+         Value_lbl = paste0("", Percentual)) %>%
+  filter(rank<=20)
+
+deaths_max <- deaths_max[order(deaths_max$rank),]
+
+maximum <- merge(max_confirmed, max_death, by = "Country")
+
+maximum$Lethality <- (maximum$Deaths/maximum$Confirmed)*100
+maximum <- maximum %>%
+  mutate(rank=rank(-Lethality),
+         Value_lbl = paste0("", Lethality))  %>%
+  filter(rank<=20)
 #############################
 
 library(rworldmap)
 #rworldmapExamples()
-## log palette ##
-#create a map-shaped window
 
 ######### Confirmed #########
 mapDevice('x11')
@@ -114,25 +129,13 @@ mapCountryData(spdf, nameColumnToPlot="Deaths", numCats = 20,
 
 savePlot(filename=paste0("www/deaths.png"),type="png")
 dev.off()
-########
-## normal palette ##
-#mapDevice('x11')
-
-#spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", 
-#                            nameJoinColumn="Country")
-
-#mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 20,
-#               catMethod="fixedWidth", 
-#               colourPalette="diverging")
-
-#savePlot(filename=paste0("www/map.png"),type="png")
-#dev.off()
 
 rm(url,spdf, destfile, datajson)
 ########################################################
 
 #library(caTools)
 #bargif <- read.gif('COVID.gif')
+#library(leaflet)
 
 ########################################################
 
@@ -145,20 +148,33 @@ ui <- fluidPage(
    p(h2("Diagrams illustrating the increasing of COVID-19 case numbers in 
      different countries.", align="center")),
    br(),
-   
 #   downloadLink("testgif", label = "EVOLUTION GIF"),
-   plotOutput("TOTAL"),
-   hr(),
-   plotOutput("Evolution"),
-   hr(),
+   tabsetPanel(
+     tabPanel(title = "WORLD",
+              plotOutput("TOTAL"),
+              hr(),
+              plotOutput("Evolution")
+              ),
+     
+     tabPanel(title = "STATISTICS", 
    plotOutput("Percentual"),
    hr(),
+   plotOutput("Percentual2"),
+   hr(),
+   plotOutput("lethal")
+     ),
+     
+     tabPanel(title = "MAPS",   
    p("The map below illustrates the countries with highest confirmed cases of 
      COVID-19. Since the USA has a high number of cases, it makes difficult 
      to see other countries in this scale. So I used a log palette scale to 
      makes the differences between other countries visible."),
-   img(src="logmap.png"),
+   div(img(src="logmap.png"), style="text-align: center;"),
    hr(),
+   div(img(src="deaths.png"), style="text-align: center;")
+   ),
+   
+     tabPanel(title = "COUNTRY", 
    p("Data relative to each Country"),
    
     sidebarPanel(
@@ -172,10 +188,8 @@ ui <- fluidPage(
           tabPanel("Deaths", plotOutput("deaths")),
           tabPanel("New Cases", plotOutput("newcases")),
           tabPanel("New Deaths", plotOutput("newdeaths"))
-#          tabPanel("EvolutionTable", dataTableOutput("results"))
       )
- ))
-
+ ))))
 
 # Define server logic 
 server <- function(input, output) {
@@ -246,6 +260,25 @@ server <- function(input, output) {
         coord_flip()
     })
     
+    output$Percentual2 <- renderPlot({
+      ggplot(deaths_max, aes(x=reorder(Country, Percentual), y=Percentual))+
+        geom_bar(stat = "identity", fill = "red")+
+        theme_bw(base_size = 17) +
+        ggtitle("% OF DEATHS X TOTAL POPULATION (20 highest rates)")+
+        ylab("% of total population")+
+        xlab("Country")+
+        coord_flip()
+    })
+    
+    output$lethal <- renderPlot({
+      ggplot(maximum, aes(x=reorder(Country, Lethality), y=Lethality))+
+        geom_bar(stat = "identity", fill = "red")+
+        theme_bw(base_size = 17) +
+        ggtitle("LETHALITY INDEX (20 highest rates)")+
+        ylab("Lethality Index (%)")+
+        xlab("Country")+
+        coord_flip()
+    })
     output$graph <- renderPlot({
       ggplot(filtered(), aes(x=Date, y=Confirmed))+
         geom_bar(stat = "identity", fill = "darkblue")+
