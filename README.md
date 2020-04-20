@@ -6,7 +6,7 @@ The data is obtained from
 https://github.com/pomber/covid19
 in a well suited .json format file.
 
-One of the objectives was the development of an app with Shiny. After all, this can be seen at
+One of the main objectives was the development of an app with Shiny. After all, this can be seen at
 
 http://anderson-hoff.shinyapps.io/Covid19
 
