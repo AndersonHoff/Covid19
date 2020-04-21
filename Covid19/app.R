@@ -6,6 +6,7 @@ library(ggplot2)
 library(magrittr)
 library(reshape2)
 library(jsonlite)
+library(shinythemes)
 
 ###############################
 url <- "https://pomber.github.io/covid19/timeseries.json"
@@ -102,69 +103,97 @@ maximum <- maximum %>%
   filter(rank<=20)
 #############################
 
-library(rworldmap)
-#rworldmapExamples()
+#library(rworldmap)
 
 ######### Confirmed #########
-mapDevice('x11')
-#join to a coarse resolution map
-spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", 
-                            nameJoinColumn="Country")
+#mapDevice('x11')
 
-mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 20,
-               catMethod="logFixedWidth", 
-               colourPalette="diverging")
+#spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", 
+#                            nameJoinColumn="Country")
 
-savePlot(filename=paste0("www/logmap.png"),type="png")
-dev.off()
+#mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 20,
+#               catMethod="logFixedWidth", 
+#               colourPalette="diverging")
+
+#savePlot(filename=paste0("www/logmap.png"),type="png")
+#dev.off()
 
 ####### Deaths ########
-mapDevice('x11')
-spdf <- joinCountryData2Map(max_death, joinCode="NAME", 
-                            nameJoinColumn="Country")
+#mapDevice('x11')
+#spdf <- joinCountryData2Map(max_death, joinCode="NAME", 
+#                            nameJoinColumn="Country")
 
-mapCountryData(spdf, nameColumnToPlot="Deaths", numCats = 20,
-               catMethod="logFixedWidth", 
-               colourPalette="diverging")
+#mapCountryData(spdf, nameColumnToPlot="Deaths", numCats = 20,
+#               catMethod="logFixedWidth", 
+#               colourPalette="diverging")
 
-savePlot(filename=paste0("www/deaths.png"),type="png")
-dev.off()
+#savePlot(filename=paste0("www/deaths.png"),type="png")
+#dev.off()
 
 rm(url,spdf, destfile, datajson)
 ########################################################
 
 #library(caTools)
-#bargif <- read.gif('COVID.gif')
-#library(leaflet)
+#bargif <- read.gif('www/Covid19.gif')
 
 ########################################################
 
 # Define UI for application
-ui <- fluidPage(
+ui <- navbarPage(title ="COVID-19: Diagrams illustrating the 
+                        increasing of COVID-19 numbers in 
+                        the world",
    
    # Application title
-   headerPanel(h1("COVID-19 PANDEMIC", align="center")),
-   br(),
-   p(h2("Diagrams illustrating the increasing of COVID-19 case numbers in 
-     different countries.", align="center")),
-   br(),
+#   headerPanel(h1("COVID-19 PANDEMIC", align="center")),
+#   br(),
+#   p(h2("Diagrams illustrating the increasing of COVID-19 numbers in 
+#     different countries.", align="center")),
+#   br(),div(src="sars-cov-19.jpg")
 #   downloadLink("testgif", label = "EVOLUTION GIF"),
-   tabsetPanel(
-     tabPanel(title = "WORLD",
-              plotOutput("TOTAL"),
-              hr(),
-              plotOutput("Evolution")
-              ),
+   tabsetPanel(type = "pills",
+      
+      tabPanel(title = "EVOLUTION",
+        hr(),
+        p(h4("Evolution of the total number of cases around the World", 
+             align="center")),
+        hr(),
+        plotOutput("TOTAL"),
+        hr(),
+        plotOutput("Evolution")
+        ),
      
+      tabPanel(title = "SELECT A COUNTRY", 
+               hr(),  
+               p("Data relative to each Country. Select the respective Country in 
+     the panel."),
+               
+               sidebarPanel(
+                 selectInput("countryInput", "Country",
+                             choices = Countries, selected = "")
+               ),
+               
+               mainPanel(
+                 tabsetPanel(
+                   tabPanel("Contamined", plotOutput("graph")),
+                   tabPanel("Deaths", plotOutput("deaths")),
+                   tabPanel("New Cases", plotOutput("newcases")),
+                   tabPanel("New Deaths", plotOutput("newdeaths"))
+                 ))),
+      
      tabPanel(title = "STATISTICS", 
-   plotOutput("Percentual"),
-   hr(),
-   plotOutput("Percentual2"),
-   hr(),
-   plotOutput("lethal")
-     ),
+        hr(),        
+        p("The results are calculated related to the total population 
+          of each country."),
+        plotOutput("Percentual"),
+        hr(),
+        plotOutput("Percentual2"),
+        hr(),
+        p("The lethality in each country (the ratio between people who 
+          died from the total that got the virus."),
+        plotOutput("lethal")
+        ),
      
-     tabPanel(title = "MAPS",   
+     tabPanel(title = "WORLD MAPS",   
    p("The map below illustrates the countries with highest confirmed cases of 
      COVID-19. Since the USA has a high number of cases, it makes difficult 
      to see other countries in this scale. So I used a log palette scale to 
@@ -174,31 +203,20 @@ ui <- fluidPage(
    div(img(src="deaths.png"), style="text-align: center;")
    ),
    
-     tabPanel(title = "COUNTRY", 
-   p("Data relative to each Country"),
+     tabPanel(title = "GIF",
+              hr(),
+              img(src="Covid19.gif", align = "left", height='600px',width='700px')
+              ),
    
-    sidebarPanel(
-       selectInput("countryInput", "Country",
-                   choices = Countries, selected = "")
-    ),
-      
-      mainPanel(
-        tabsetPanel(
-          tabPanel("Contamined", plotOutput("graph")),
-          tabPanel("Deaths", plotOutput("deaths")),
-          tabPanel("New Cases", plotOutput("newcases")),
-          tabPanel("New Deaths", plotOutput("newdeaths"))
-      )
- ))))
+    tabPanel("ABOUT",
+             hr(),
+             p("Write..."))
+   ))
 
 # Define server logic 
 server <- function(input, output) {
   
   filtered <- reactive({dataset[dataset$Country==input$countryInput, ]})
-  
-#    output$results <- renderDataTable({
-#      filtered() 
-#    })
     
     output$TOTAL <- renderPlot({
       ggplot()+
