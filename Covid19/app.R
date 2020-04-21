@@ -103,32 +103,32 @@ maximum <- maximum %>%
   filter(rank<=20)
 #############################
 
-#library(rworldmap)
+library(rworldmap)
 
 ######### Confirmed #########
-#mapDevice('x11')
+mapDevice('x11')
 
-#spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", 
-#                            nameJoinColumn="Country")
+spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", 
+                            nameJoinColumn="Country")
 
-#mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 20,
-#               catMethod="logFixedWidth", 
-#               colourPalette="diverging")
+mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 20,
+               catMethod="logFixedWidth", 
+               colourPalette="diverging")
 
-#savePlot(filename=paste0("www/logmap.png"),type="png")
-#dev.off()
+savePlot(filename=paste0("www/logmap.png"),type="png")
+dev.off()
 
 ####### Deaths ########
-#mapDevice('x11')
-#spdf <- joinCountryData2Map(max_death, joinCode="NAME", 
-#                            nameJoinColumn="Country")
+mapDevice('x11')
+spdf <- joinCountryData2Map(max_death, joinCode="NAME", 
+                            nameJoinColumn="Country")
 
-#mapCountryData(spdf, nameColumnToPlot="Deaths", numCats = 20,
-#               catMethod="logFixedWidth", 
-#               colourPalette="diverging")
+mapCountryData(spdf, nameColumnToPlot="Deaths", numCats = 20,
+               catMethod="logFixedWidth", 
+               colourPalette="diverging")
 
-#savePlot(filename=paste0("www/deaths.png"),type="png")
-#dev.off()
+savePlot(filename=paste0("www/deaths.png"),type="png")
+dev.off()
 
 rm(url,spdf, destfile, datajson)
 ########################################################
@@ -139,23 +139,19 @@ rm(url,spdf, destfile, datajson)
 ########################################################
 
 # Define UI for application
-ui <- navbarPage(title ="COVID-19: Diagrams illustrating the 
+ui <- navbarPage(title =div(img(src="sars-cov-19.jpg", height='30px',width='40px'),
+                        "COVID-19: Diagrams illustrating the 
                         increasing of COVID-19 numbers in 
-                        the world",
+                        the world"),
    
-   # Application title
-#   headerPanel(h1("COVID-19 PANDEMIC", align="center")),
-#   br(),
-#   p(h2("Diagrams illustrating the increasing of COVID-19 numbers in 
-#     different countries.", align="center")),
-#   br(),div(src="sars-cov-19.jpg")
-#   downloadLink("testgif", label = "EVOLUTION GIF"),
    tabsetPanel(type = "pills",
       
       tabPanel(title = "EVOLUTION",
         hr(),
-        p(h4("Evolution of the total number of cases around the World", 
-             align="center")),
+        p(h4("Evolution of the total number of cases around the World. The 
+             first graph show the sum of confirmed and death cases along 
+             the days. The second one illustrates the number of new cases 
+             in each day.")),
         hr(),
         plotOutput("TOTAL"),
         hr(),
@@ -164,8 +160,8 @@ ui <- navbarPage(title ="COVID-19: Diagrams illustrating the
      
       tabPanel(title = "SELECT A COUNTRY", 
                hr(),  
-               p("Data relative to each Country. Select the respective Country in 
-     the panel."),
+               p(h4("Data relative to each Country. Select the respective Country in 
+     the panel.")),
                
                sidebarPanel(
                  selectInput("countryInput", "Country",
@@ -182,36 +178,37 @@ ui <- navbarPage(title ="COVID-19: Diagrams illustrating the
       
      tabPanel(title = "STATISTICS", 
         hr(),        
-        p("The results are calculated related to the total population 
-          of each country."),
+        p(h4("The results are calculated related to the total population 
+          of each country.")),
         plotOutput("Percentual"),
         hr(),
         plotOutput("Percentual2"),
         hr(),
-        p("The lethality in each country (the ratio between people who 
-          died from the total that got the virus."),
+        p(h4("The lethality in each country (the ratio between people who 
+          died from the total that got the virus).")),
         plotOutput("lethal")
         ),
      
-     tabPanel(title = "WORLD MAPS",   
-   p("The map below illustrates the countries with highest confirmed cases of 
-     COVID-19. Since the USA has a high number of cases, it makes difficult 
-     to see other countries in this scale. So I used a log palette scale to 
-     makes the differences between other countries visible."),
-   div(img(src="logmap.png"), style="text-align: center;"),
-   hr(),
-   div(img(src="deaths.png"), style="text-align: center;")
-   ),
+     tabPanel(title = "WORLD MAPS",
+              hr(),
+              p(h4("The map below illustrates the countries with highest confirmed cases of 
+                    COVID-19. Since the USA has a high number of cases, it makes difficult 
+                    to see other countries in this scale. So I used a log palette scale to 
+                    makes the differences between other countries visible.")),
+              div(img(src="logmap.png"), style="text-align: left;"),
+              hr(),
+              div(img(src="deaths.png"), style="text-align: left;")
+            ),
    
      tabPanel(title = "GIF",
               hr(),
               img(src="Covid19.gif", align = "left", height='600px',width='700px')
               ),
    
-    tabPanel("ABOUT",
+     tabPanel("ABOUT",
              hr(),
              p("Write..."))
-   ))
+    ))
 
 # Define server logic 
 server <- function(input, output) {
@@ -225,11 +222,11 @@ server <- function(input, output) {
                   fill = "darkblue")+
         geom_area(mapping = aes(x=total_death$Date, y=total_death$Deaths*coeff), 
                   fill = "red")+
-        theme_bw(base_size = 22) +
+        theme_bw(base_size = 20) +
         scale_y_continuous(name="Confirmed Cases", labels = scales::comma,
                            sec.axis = sec_axis(~ . * 0.1, name = "Deaths",
                                                labels = scales::comma))+
-        ggtitle("CONFIRMED (blue) and DEATH (red) CASES OF COVID-19")+
+        ggtitle("Confirmed (blue) and death (red) cases of Covid-19")+
         xlab("")+
         theme(
           axis.title.y = element_text(color = "blue"),
@@ -250,7 +247,7 @@ server <- function(input, output) {
                  fill = "darkblue")+
         geom_col(mapping = aes(x=daydata$Date, y=daydata$Day_Death*coeff/2), 
                   fill = "red")+
-        theme_bw(base_size = 22) +
+        theme_bw(base_size = 20) +
         scale_y_continuous(name="Confirmed Cases", labels = scales::comma,
                            sec.axis = sec_axis(~ . * 0.2, name = "Deaths",
                                                labels = scales::comma))+
@@ -272,7 +269,7 @@ server <- function(input, output) {
       ggplot(max_country, aes(x=reorder(Country, Percentual), y=Percentual))+
         geom_bar(stat = "identity", fill = "darkblue")+
         theme_bw(base_size = 17) +
-        ggtitle("% OF CONFIRMED CASES X TOTAL POPULATION (20 highest rates)")+
+        ggtitle("% of confirmed cases related to Country population (20 highest rates)")+
         ylab("% of total population")+
         xlab("Country")+
         coord_flip()
@@ -282,7 +279,7 @@ server <- function(input, output) {
       ggplot(deaths_max, aes(x=reorder(Country, Percentual), y=Percentual))+
         geom_bar(stat = "identity", fill = "red")+
         theme_bw(base_size = 17) +
-        ggtitle("% OF DEATHS X TOTAL POPULATION (20 highest rates)")+
+        ggtitle("% of deaths related to Country population (20 highest rates)")+
         ylab("% of total population")+
         xlab("Country")+
         coord_flip()
@@ -292,7 +289,7 @@ server <- function(input, output) {
       ggplot(maximum, aes(x=reorder(Country, Lethality), y=Lethality))+
         geom_bar(stat = "identity", fill = "red")+
         theme_bw(base_size = 17) +
-        ggtitle("LETHALITY INDEX (20 highest rates)")+
+        ggtitle("Lethality index (20 highest rates)")+
         ylab("Lethality Index (%)")+
         xlab("Country")+
         coord_flip()
@@ -302,7 +299,7 @@ server <- function(input, output) {
         geom_bar(stat = "identity", fill = "darkblue")+
         theme_bw(base_size = 25) +
         scale_y_continuous(name="Confirmed Cases", labels = scales::comma)+
-        ggtitle("CONFIRMED CASES OF COVID-19")+
+        ggtitle("Confirmed cases of Covid-19")+
         xlab("")
     
    })
@@ -311,7 +308,7 @@ server <- function(input, output) {
       ggplot(filtered(), aes(x=Date, y=Deaths))+
         geom_bar(stat = "identity", fill = "red")+
         theme_bw(base_size = 25) +
-        ggtitle("DEATHS FROM COVID-19")+
+        ggtitle("Deaths from Covid-19")+
         ylab("Deaths Cases")+
         xlab("")
       
@@ -322,8 +319,8 @@ server <- function(input, output) {
     output$newcases <- renderPlot({
       ggplot(filtered2(), aes(x=Date, y=diary))+
         geom_bar(stat = "identity", fill = "darkblue")+
-        theme_bw(base_size = 25) +
-        ggtitle("NEW CONFIRMED CASES FOR EACH DAY")+
+        theme_bw(base_size = 22) +
+        ggtitle("New confirmed cases for each day")+
         ylab("New Confirmed Cases")+
         xlab("")
       
@@ -334,21 +331,13 @@ server <- function(input, output) {
     output$newdeaths <- renderPlot({
       ggplot(filtered3(), aes(x=Date, y=diarydeaths))+
         geom_bar(stat = "identity", fill = "red")+
-        theme_bw(base_size = 25) +
-        ggtitle("NEW DEATHS FOR EACH DAY")+
+        theme_bw(base_size = 22) +
+        ggtitle("New deaths for each day")+
         ylab("New Death Cases")+
         xlab("")
       
     })
-#    output$testgif <- downloadHandler(
-#      filename = function(){
-#        paste('COVID-', content = Sys.Date(), contentType = "gif")
-#      },
-#      content = function(file) {
-#        read.gif(COVID, file)
-#      }
-#    )
-        
+       
 }
 
 # Run the application 
