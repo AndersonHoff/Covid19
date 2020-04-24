@@ -7,11 +7,12 @@ library(magrittr)
 library(reshape2)
 library(jsonlite)
 library(shinythemes)
+library(plotly)
 
 ###############################
 url <- "https://pomber.github.io/covid19/timeseries.json"
 destfile <- "timeseries.json"
-download.file(url, destfile,method = "curl", mode="wb")
+download.file(url, destfile, method = "curl", mode="wb")
 
 datajson <- jsonlite::fromJSON('timeseries.json')
 
@@ -39,13 +40,13 @@ eachday <- dataset[order(dataset$Country, dataset$Confirmed),]
 eachday <- eachday %>%
   select(-Recovered) %>%
   group_by(Country) %>%
-  mutate(diary = Confirmed - lag(Confirmed, default = 0))
+  mutate(New_Cases = Confirmed - lag(Confirmed, default = 0))
 
 deathday <- dataset[order(dataset$Country, dataset$Confirmed),]
 deathday <- deathday %>%
   select(-Recovered) %>%
   group_by(Country) %>%
-  mutate(diarydeaths = Deaths - lag(Deaths, default = 0))
+  mutate(New_Deaths = Deaths - lag(Deaths, default = 0))
 
 ###############################################################
 
@@ -56,10 +57,10 @@ colnames(total_confirmed) <- c("Date","Confirmed")
 total_death <- aggregate(dataset$Deaths, by=list(Category=dataset$Date), FUN=sum)
 colnames(total_death) <- c("Date","Deaths")
 
-day_confirmed <- aggregate(eachday$diary, by=list(Category=eachday$Date), FUN=sum)
+day_confirmed <- aggregate(eachday$New_Cases, by=list(Category=eachday$Date), FUN=sum)
 colnames(day_confirmed) <- c("Date","Day_Confirmed ")
 
-day_death <- aggregate(deathday$diarydeaths, by=list(Category=deathday$Date), FUN=sum)
+day_death <- aggregate(deathday$New_Deaths, by=list(Category=deathday$Date), FUN=sum)
 colnames(day_death) <- c("Date","Day_Death ")
 
 daydata <- merge(day_confirmed, day_death, by="Date")
@@ -109,7 +110,7 @@ library(rworldmap)
 mapDevice('x11')
 
 spdf <- joinCountryData2Map(max_confirmed, joinCode="NAME", 
-                            nameJoinColumn="Country")
+                           nameJoinColumn="Country")
 
 mapCountryData(spdf, nameColumnToPlot="Confirmed", numCats = 20,
                catMethod="logFixedWidth", 
@@ -121,7 +122,7 @@ dev.off()
 ####### Deaths ########
 mapDevice('x11')
 spdf <- joinCountryData2Map(max_death, joinCode="NAME", 
-                            nameJoinColumn="Country")
+                           nameJoinColumn="Country")
 
 mapCountryData(spdf, nameColumnToPlot="Deaths", numCats = 20,
                catMethod="logFixedWidth", 
@@ -130,7 +131,7 @@ mapCountryData(spdf, nameColumnToPlot="Deaths", numCats = 20,
 savePlot(filename=paste0("www/deaths.png"),type="png")
 dev.off()
 
-rm(url,spdf, destfile, datajson)
+rm(url, destfile, datajson)
 ########################################################
 
 #library(caTools)
@@ -139,10 +140,9 @@ rm(url,spdf, destfile, datajson)
 ########################################################
 
 # Define UI for application
-ui <- navbarPage(title =div(img(src="sars-cov-19.jpg", height='30px',width='40px'),
-                        "COVID-19: Diagrams illustrating the 
+ui <- navbarPage(title =div("COVID-19: Diagrams illustrating the 
                         increasing of COVID-19 numbers in 
-                        the world"),
+                        the world", img(src="sars-cov-19.jpg", height='30px',width='40px')),
    
    tabsetPanel(type = "pills",
       
@@ -170,31 +170,37 @@ ui <- navbarPage(title =div(img(src="sars-cov-19.jpg", height='30px',width='40px
                
                mainPanel(
                  tabsetPanel(
-                   tabPanel("Contamined", plotOutput("graph")),
-                   tabPanel("Deaths", plotOutput("deaths")),
-                   tabPanel("New Cases", plotOutput("newcases")),
-                   tabPanel("New Deaths", plotOutput("newdeaths"))
+                   tabPanel("Contamined", plotlyOutput("graph")),
+                   tabPanel("Deaths", plotlyOutput("deaths")),
+                   tabPanel("New Cases", plotlyOutput("newcases")),
+                   tabPanel("New Deaths", plotlyOutput("newdeaths"))
                  ))),
       
      tabPanel(title = "STATISTICS", 
         hr(),        
-        p(h4("The results are calculated related to the total population 
-          of each country.")),
-        plotOutput("Percentual"),
+        p(h4("Some interesting results are obtained when we compare the numbers of 
+              of Covid-19 with the total population of each Country. This is 
+             illustrated below, where the 20 highest rates are shown for confirmed 
+             cases and deaths.")),
+        br(),
+        plotlyOutput("Percentual"),
         hr(),
-        plotOutput("Percentual2"),
+        plotlyOutput("Percentual2"),
         hr(),
-        p(h4("The lethality in each country (the ratio between people who 
-          died from the total that got the virus).")),
-        plotOutput("lethal")
+        p(h4("Also, the mortality rate (the ratio between people who 
+            died from the total that got the virus) is aproximately 4%. 
+              However, as can be seen below, the mortality rate is much
+             higher in some countries.")),
+        plotlyOutput("lethal")
         ),
      
      tabPanel(title = "WORLD MAPS",
               hr(),
-              p(h4("The map below illustrates the countries with highest confirmed cases of 
-                    COVID-19. Since the USA has a high number of cases, it makes difficult 
-                    to see other countries in this scale. So I used a log palette scale to 
+              p(h4("The maps below illustrates the countries with highest confirmed and death cases of 
+                    COVID-19. The high number of cases in USA makes difficult 
+                    to see other countries in a linear scale. So I used a log scale to 
                     makes the differences between other countries visible.")),
+              br(),
               div(img(src="logmap.png"), style="text-align: left;"),
               hr(),
               div(img(src="deaths.png"), style="text-align: left;")
@@ -207,8 +213,20 @@ ui <- navbarPage(title =div(img(src="sars-cov-19.jpg", height='30px',width='40px
    
      tabPanel("ABOUT",
              hr(),
-             p("Write..."))
-    ))
+             p(h4("This Shiny App was developed during the quarentine, 
+                to do some statistical analysis in the COVID-19 data.")), 
+             p(h4("Also, it was a perfect opportunity to learn how to build an
+                app in R.")),
+              br(),
+             p(h4("The data is loaded from")),
+             helpText(a(h4("Github/pomber"), href=" https://pomber.github.io/covid19/timeseries.json")), 
+             p(h4("in a .json file. The original file is from Johns Hopkins 
+                  University")),
+             helpText(a(h4("Johns Hopkins University"), href=" https://github.com/CSSEGISandData/COVID-19")),
+             br(),
+             hr(),
+             p(h4(em("By Anderson Hoff, 2020")))
+    )))
 
 # Define server logic 
 server <- function(input, output) {
@@ -265,77 +283,81 @@ server <- function(input, output) {
       
     })
     
-    output$Percentual <- renderPlot({
-      ggplot(max_country, aes(x=reorder(Country, Percentual), y=Percentual))+
+    output$Percentual <- renderPlotly({
+      ggplotly(ggplot(max_country, aes(x=reorder(Country, Percentual), y=Percentual))+
         geom_bar(stat = "identity", fill = "darkblue")+
-        theme_bw(base_size = 17) +
+        theme_bw(base_size = 14) +
         ggtitle("% of confirmed cases related to Country population (20 highest rates)")+
         ylab("% of total population")+
         xlab("Country")+
         coord_flip()
+      )
     })
     
-    output$Percentual2 <- renderPlot({
-      ggplot(deaths_max, aes(x=reorder(Country, Percentual), y=Percentual))+
+    output$Percentual2 <- renderPlotly({
+      ggplotly(ggplot(deaths_max, aes(x=reorder(Country, Percentual), y=Percentual))+
         geom_bar(stat = "identity", fill = "red")+
-        theme_bw(base_size = 17) +
+        theme_bw(base_size = 14) +
         ggtitle("% of deaths related to Country population (20 highest rates)")+
         ylab("% of total population")+
         xlab("Country")+
         coord_flip()
+      )
     })
     
-    output$lethal <- renderPlot({
-      ggplot(maximum, aes(x=reorder(Country, Lethality), y=Lethality))+
+    output$lethal <- renderPlotly({
+      ggplotly(ggplot(maximum, aes(x=reorder(Country, Lethality), y=Lethality))+
         geom_bar(stat = "identity", fill = "red")+
-        theme_bw(base_size = 17) +
-        ggtitle("Lethality index (20 highest rates)")+
-        ylab("Lethality Index (%)")+
+        theme_bw(base_size = 14) +
+        ggtitle("Mortality Rate (20 highest rates)")+
+        ylab("Mortality Rate (%)")+
         xlab("Country")+
         coord_flip()
+      )
     })
-    output$graph <- renderPlot({
-      ggplot(filtered(), aes(x=Date, y=Confirmed))+
+    
+    output$graph <- renderPlotly({
+      ggplotly(ggplot(filtered(), aes(x=Date, y=Confirmed))+
         geom_bar(stat = "identity", fill = "darkblue")+
-        theme_bw(base_size = 25) +
+        theme_bw(base_size = 15) +
         scale_y_continuous(name="Confirmed Cases", labels = scales::comma)+
         ggtitle("Confirmed cases of Covid-19")+
         xlab("")
-    
+      )
    })
     
-    output$deaths <- renderPlot({
-      ggplot(filtered(), aes(x=Date, y=Deaths))+
+    output$deaths <- renderPlotly({
+      ggplotly(ggplot(filtered(), aes(x=Date, y=Deaths))+
         geom_bar(stat = "identity", fill = "red")+
-        theme_bw(base_size = 25) +
+        theme_bw(base_size = 15) +
         ggtitle("Deaths from Covid-19")+
         ylab("Deaths Cases")+
         xlab("")
-      
+      )
     })
     
     filtered2 <- reactive({eachday[eachday$Country==input$countryInput, ]})
     
-    output$newcases <- renderPlot({
-      ggplot(filtered2(), aes(x=Date, y=diary))+
+    output$newcases <- renderPlotly({
+      ggplotly(ggplot(filtered2(), aes(x=Date, y=New_Cases))+
         geom_bar(stat = "identity", fill = "darkblue")+
-        theme_bw(base_size = 22) +
+        theme_bw(base_size = 15) +
         ggtitle("New confirmed cases for each day")+
         ylab("New Confirmed Cases")+
         xlab("")
-      
+      )
     })
     
     filtered3 <- reactive({deathday[deathday$Country==input$countryInput, ]})
     
-    output$newdeaths <- renderPlot({
-      ggplot(filtered3(), aes(x=Date, y=diarydeaths))+
+    output$newdeaths <- renderPlotly({
+      ggplotly(ggplot(filtered3(), aes(x=Date, y=New_Deaths))+
         geom_bar(stat = "identity", fill = "red")+
-        theme_bw(base_size = 22) +
+        theme_bw(base_size = 15) +
         ggtitle("New deaths for each day")+
         ylab("New Death Cases")+
         xlab("")
-      
+      )
     })
        
 }
