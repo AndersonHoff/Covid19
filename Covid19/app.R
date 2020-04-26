@@ -21,6 +21,8 @@ dataset <- reshape2::melt(datajson, id.vars = c("date", "confirmed","deaths",
 
 colnames(dataset) <- c("Date","Confirmed",  "Deaths", "Recovered","Country")
 
+dataset <- dataset[!(dataset$Country == "MS Zaandam"),] 
+
 dataset$Confirmed <- as.integer(dataset$Confirmed)
 
 dataset$Deaths <- as.integer(dataset$Deaths)
@@ -98,6 +100,9 @@ deaths_max <- deaths_max[order(deaths_max$rank),]
 maximum <- merge(max_confirmed, max_death, by = "Country")
 
 maximum$Lethality <- (maximum$Deaths/maximum$Confirmed)*100
+Mortality <- maximum %>% 
+  select(-Confirmed, -Deaths)
+colnames(Mortality) <- c("Country", "Mortality")
 maximum <- maximum %>%
   mutate(rank=rank(-Lethality),
          Value_lbl = paste0("", Lethality))  %>%
@@ -129,6 +134,17 @@ mapCountryData(spdf, nameColumnToPlot="Deaths", numCats = 20,
                colourPalette="diverging")
 
 savePlot(filename=paste0("www/deaths.png"),type="png")
+dev.off()
+
+############ Mortality ########
+mapDevice('x11')
+#join to a coarse resolution map
+spdf <- joinCountryData2Map(Mortality, joinCode="NAME", nameJoinColumn="Country")
+
+mapCountryData(spdf, nameColumnToPlot="Mortality", numCats = 20,catMethod="fixedWidth", 
+               colourPalette="diverging")
+
+savePlot(filename=paste0("www/mortality.png"),type="png")
 dev.off()
 
 rm(url, destfile, datajson)
@@ -191,7 +207,9 @@ ui <- navbarPage(title =div("COVID-19: Diagrams illustrating the
             died from the total that got the virus) is aproximately 4%. 
               However, as can be seen below, the mortality rate is much
              higher in some countries.")),
-        plotlyOutput("lethal")
+        plotlyOutput("lethal"),
+        br(),
+        div(img(src="mortality.png"), style="text-align: left;")
         ),
      
      tabPanel(title = "WORLD MAPS",
@@ -224,6 +242,8 @@ ui <- navbarPage(title =div("COVID-19: Diagrams illustrating the
                   University")),
              helpText(a(h4("Johns Hopkins University"), href=" https://github.com/CSSEGISandData/COVID-19")),
              br(),
+             p(h4("The source code of this project is on")),
+             helpText(a(h4("GitHub"), href= "https://github.com/AndersonHoff/Covid19")),
              hr(),
              p(h4(em("By Anderson Hoff, 2020")))
     )))

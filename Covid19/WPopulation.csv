@@ -7,7 +7,7 @@ Ranking,Country,Population
 6,Brazil,209469000
 7,Nigeria,195875000
 8,Bangladesh,161356000
-9,Russian Federation,144478000
+9,Russia,144478000
 10,Japan,126529000
 11,Mexico,126191000
 12,Ethiopia,109225000
@@ -47,7 +47,7 @@ Ranking,Country,Population
 46,Ghana,29767000
 47,Mozambique,29496000
 48,Venezuela,28870000
-49,"Yemen, Rep.",28499000
+49,Yemen,28499000
 50,Nepal,28088000
 51,Madagascar,26262000
 52,"Korea, South",25550000
@@ -84,7 +84,7 @@ Ranking,Country,Population
 83,South Sudan,10976000
 84,Greece,10728000
 85,Dominican Republic,10627000
-86,Czech Republic,10626000
+86,Czechia,10626000
 87,Portugal,10282000
 88,Sweden,10183000
 89,Jordan,9956000
@@ -178,7 +178,7 @@ Ranking,Country,Population
 177,Barbados,287000
 178,New Caledonia,284000
 179,French Polynesia,278000
-180,São Tomé and Principe,211000
+180,São Tome and Principe,211000
 181,Samoa,196000
 182,Saint Lucia,182000
 183,Channel Islands,170000
@@ -218,8 +218,7 @@ Ranking,Country,Population
 217,Diamond Princess,24000000
 218,Holy See,24000000
 219,Eritrea,24000000
-220,Saint Kitts and Nevis,24000000
-221,Saint Lucia,24000000
-222,Saint Vincent and the Grenadines,24000000
-223,Slovakia,24000000
-224,Taiwan*,24000000
+220,Western Sahara,24000000
+221,Slovakia,24000000
+222,Taiwan*,24000000
+223,MS Zaandam,24000000
