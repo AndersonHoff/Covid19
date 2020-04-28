@@ -66,7 +66,7 @@ day_death <- aggregate(deathday$New_Deaths, by=list(Category=deathday$Date), FUN
 colnames(day_death) <- c("Date","Day_Death ")
 
 daydata <- merge(day_confirmed, day_death, by="Date")
-daydata$lethal <- (daydata$Day_Death/daydata$Day_Confirmed)*100
+daydata$Mortality <- (daydata$Day_Death/daydata$Day_Confirmed)*100
 ##################################################################
 
 population <- read.csv('WPopulation.csv', stringsAsFactors = F, header = TRUE)
@@ -107,6 +107,17 @@ maximum <- maximum %>%
   mutate(rank=rank(-Lethality),
          Value_lbl = paste0("", Lethality))  %>%
   filter(rank<=20)
+
+max_de <- max(total_death$Deaths)
+max_de <- sprintf("%.0f", max_de)
+max_co <- max(total_confirmed$Confirmed)
+max_co <- sprintf("%.0f", max_co)
+mort_rate <- max(total_death$Deaths)/max(total_confirmed$Confirmed)*100
+mort_rate <- sprintf("%.2f", mort_rate)
+max <- tibble(Conf = max_co,
+                  Dea = max_de,
+                  rate = mort_rate)
+colnames(max) <- c("Confirmed Cases", "Death Cases", "Mortality Rate (%)")
 #############################
 
 library(rworldmap)
@@ -138,7 +149,7 @@ dev.off()
 
 ############ Mortality ########
 mapDevice('x11')
-#join to a coarse resolution map
+
 spdf <- joinCountryData2Map(Mortality, joinCode="NAME", nameJoinColumn="Country")
 
 mapCountryData(spdf, nameColumnToPlot="Mortality", numCats = 20,catMethod="fixedWidth", 
@@ -147,7 +158,6 @@ mapCountryData(spdf, nameColumnToPlot="Mortality", numCats = 20,catMethod="fixed
 savePlot(filename=paste0("www/mortality.png"),type="png")
 dev.off()
 
-rm(url, destfile, datajson)
 ########################################################
 
 #library(caTools)
@@ -190,38 +200,49 @@ ui <- navbarPage(title =div("COVID-19: Diagrams illustrating the
                    tabPanel("Deaths", plotlyOutput("deaths")),
                    tabPanel("New Cases", plotlyOutput("newcases")),
                    tabPanel("New Deaths", plotlyOutput("newdeaths"))
-                 ))),
+                 )),
+               hr(),
+               p(h4("The maps below illustrates the countries with highest confirmed and death cases of 
+                    COVID-19. The high number of cases in USA makes difficult 
+                    to see other countries in a linear scale. So I used a log scale to 
+                    makes the differences between other countries visible, although less 
+                    practical.")),
+               br(),
+               div(img(src="logmap.png"), style="text-align: left;"),
+               hr(),
+               div(img(src="deaths.png"), style="text-align: left;")
+               ),
       
-     tabPanel(title = "STATISTICS", 
+     tabPanel(title = "HIGHEST RATES", 
         hr(),        
         p(h4("Some interesting results are obtained when we compare the numbers of 
               of Covid-19 with the total population of each Country. This is 
              illustrated below, where the 20 highest rates are shown for confirmed 
-             cases and deaths.")),
+             and death cases.")),
         br(),
         plotlyOutput("Percentual"),
         hr(),
-        plotlyOutput("Percentual2"),
-        hr(),
-        p(h4("Also, the mortality rate (the ratio between people who 
-            died from the total that got the virus) is aproximately 4%. 
-              However, as can be seen below, the mortality rate is much
-             higher in some countries.")),
-        plotlyOutput("lethal"),
-        br(),
-        div(img(src="mortality.png"), style="text-align: left;")
+        plotlyOutput("Percentual2")
         ),
      
-     tabPanel(title = "WORLD MAPS",
+     tabPanel(title = "MORTALITY",
               hr(),
-              p(h4("The maps below illustrates the countries with highest confirmed and death cases of 
-                    COVID-19. The high number of cases in USA makes difficult 
-                    to see other countries in a linear scale. So I used a log scale to 
-                    makes the differences between other countries visible.")),
+              p(h4("The mortality rate (the ratio between people who 
+            died from the total that got the virus) evolution along the days is presented 
+                   below.")),
               br(),
-              div(img(src="logmap.png"), style="text-align: left;"),
+              plotlyOutput("mortalevo"),
+              br(),
+              p(h4("From the absolute numbers we have now")),
+              div(tableOutput("table"), style = "font-size:180%"),
+              br(),
+              p(h4("However, as can be seen below, the mortality rate is much
+             higher in some countries.")),
+              br(),
+              plotlyOutput("lethal"),
               hr(),
-              div(img(src="deaths.png"), style="text-align: left;")
+              div(img(src="mortality.png"), style="text-align: left;"),
+              hr()
             ),
    
      tabPanel(title = "GIF",
@@ -236,14 +257,14 @@ ui <- navbarPage(title =div("COVID-19: Diagrams illustrating the
              p(h4("Also, it was a perfect opportunity to learn how to build an
                 app in R.")),
               br(),
-             p(h4("The data is loaded from")),
+             p(h4("The data is loaded from ")),
              helpText(a(h4("Github/pomber"), href=" https://pomber.github.io/covid19/timeseries.json")), 
              p(h4("in a .json file. The original file is from Johns Hopkins 
-                  University")),
-             helpText(a(h4("Johns Hopkins University"), href=" https://github.com/CSSEGISandData/COVID-19")),
+                  University.")),
+             helpText(a(h4("Link of JHU GitHub"), href=" https://github.com/CSSEGISandData/COVID-19")),
              br(),
-             p(h4("The source code of this project is on")),
-             helpText(a(h4("GitHub"), href= "https://github.com/AndersonHoff/Covid19")),
+             p(h4("The source code of this project is in my page on GitHub.")),
+             helpText(a(h4("Link to GitHub"), href= "https://github.com/AndersonHoff/Covid19")),
              hr(),
              p(h4(em("By Anderson Hoff, 2020")))
     )))
@@ -322,6 +343,17 @@ server <- function(input, output) {
         ylab("% of total population")+
         xlab("Country")+
         coord_flip()
+      )
+    })
+    
+    output$table <- renderTable(max, align = "c", space = "l", width = "150")
+    
+    output$mortalevo <- renderPlotly({
+      ggplotly(ggplot(daydata, aes(x=Date, y=Mortality))+
+                 geom_smooth()+
+                 theme_bw(base_size = 14) +
+                 ggtitle("Mortality rate evolution")+
+                 ylab("Mortality rate (%)")
       )
     })
     
